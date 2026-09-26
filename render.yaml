@@ -1,12 +1,13 @@
 # Render Blueprint: https://render.com/docs/blueprint-spec
-# One Docker web service serving the API, Socket.IO and the built client,
-# with a small persistent disk for players and best times.
+# One Docker web service serving the API, Socket.IO and the built client.
+# Free plan: no persistent disk, so the SQLite data is temporary. For permanent data, switch to
+# `plan: starter` and add a `disk:` mounted at /app/server/data.
 services:
   - type: web
     name: puzzle-clash
     runtime: docker
     dockerfilePath: ./Dockerfile
-    plan: starter            # Persistent disks need a paid instance. Remove `disk:` to use the free plan.
+    plan: free               # No card needed. Data (players, history) resets when the service restarts or sleeps.
     region: oregon
     numInstances: 1          # Matches live in memory.
     healthCheckPath: /healthz
@@ -16,7 +17,3 @@ services:
         value: production
       - key: TRUST_PROXY
         value: "true"
-    disk:
-      name: puzzle-data
-      mountPath: /app/server/data
-      sizeGB: 1
