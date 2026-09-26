@@ -71,17 +71,25 @@ The pictures are already downloaded into `server/photos/`. The scripts only matt
 
 ## Deploy (Render)
 
-`render.yaml` in this folder is a Render Blueprint: one Docker web service with a 1 GB disk for players and best times. No secrets are needed.
+`render.yaml` in this folder is a Render Blueprint for the **free plan**: one Docker web service, no disk and no other paid features, so no billing details are needed. No secrets are needed either.
 
 1. Push this folder to its own GitHub repo.
 2. In Render, go to **New → Blueprint** and pick the repo, then deploy.
 
-The disk needs a paid instance (Starter). On the free plan, delete the `disk:` block; players and best times then reset on every deploy.
+What the free plan means:
 
-With plain Docker:
+- The service sleeps after about 15 minutes without visitors, and the next visitor waits roughly 30–60 seconds for it to wake.
+- Player names, win/loss records and best times live in SQLite on the container's own filesystem, so they reset whenever the service restarts, sleeps or redeploys. Matches in progress are unaffected while players are connected.
+- For permanent records, switch to `plan: starter` and add a `disk:` mounted at `/app/server/data` (paid).
+
+## Docker
+
+Puzzle Clash builds as its own image, `puzzle-clash:latest`, and runs in its own container, separate from any other game on the machine:
 
 ```bash
-docker compose up --build      # http://localhost:5070
+docker compose up -d --build   # http://localhost:5070
+docker compose logs -f         # server logs
+docker compose down            # stop (the puzzle-data volume keeps players and best times)
 ```
 
 ## Environment

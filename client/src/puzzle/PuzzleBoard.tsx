@@ -48,9 +48,14 @@ interface BoardState {
   bitmapScale: number;
   img: HTMLImageElement | null;
   drag: Drag | null;
+  /** Recently snapped pieces and when, for the placement flash. */
+  flashes: { index: number; at: number }[];
 }
 
-const PIECE_OUTLINE = 'rgba(31, 42, 68, 0.55)';
+const PIECE_OUTLINE = 'rgba(20, 24, 36, 0.6)';
+/** Visible cardboard thickness under each printed piece, in logical px. */
+const EDGE = { x: 1.6, y: 2.6, color: '#C9B28A', shade: '#9E845A' };
+const FLASH_MS = 520;
 
 export function PuzzleBoard({ setup, picture, assist, active, restorePlaced, peek, gatherSignal }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -80,24 +85,35 @@ export function PuzzleBoard({ setup, picture, assist, active, restorePlaced, pee
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, c.width, c.height);
 
-    // Board: a recessed tray where the finished picture goes.
-    ctx.fillStyle = '#EDE4D3';
-    ctx.strokeStyle = 'rgba(31,42,68,0.18)';
-    ctx.lineWidth = Math.max(1, 1.5 * s);
+    // Board: a recessed tray pressed into the felt, with a light lip along the bottom edge.
     ctx.beginPath();
-    ctx.roundRect(bx - 6 * s, by - 6 * s, (BOARD_W + 12) * s, (BOARD_H + 12) * s, 10 * s);
+    ctx.roundRect(bx - 8 * s, by - 8 * s, (BOARD_W + 16) * s, (BOARD_H + 16) * s, 12 * s);
+    ctx.fillStyle = 'rgba(8, 26, 21, 0.42)';
     ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 250, 240, 0.16)';
+    ctx.lineWidth = Math.max(1, 1.5 * s);
     ctx.stroke();
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(bx - 8 * s, by - 8 * s, (BOARD_W + 16) * s, (BOARD_H + 16) * s, 12 * s);
+    ctx.clip();
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    ctx.shadowBlur = 16 * s;
+    ctx.shadowOffsetY = 6 * s;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.lineWidth = 10 * s;
+    ctx.strokeRect(bx - 13 * s, by - 13 * s, (BOARD_W + 26) * s, (BOARD_H + 26) * s);
+    ctx.restore();
     if (st.img && live.current.assist === 'ghost') {
-      ctx.globalAlpha = 0.2;
+      ctx.globalAlpha = 0.24;
       ctx.drawImage(st.img, bx, by, BOARD_W * s, BOARD_H * s);
       ctx.globalAlpha = 1;
     }
     if (live.current.assist === 'outline') {
       ctx.save();
       ctx.setTransform(s, 0, 0, s, bx, by);
-      ctx.strokeStyle = 'rgba(31,42,68,0.14)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(255, 250, 240, 0.2)';
+      ctx.lineWidth = 1.4;
       for (const p of puzzle.pieces) {
         ctx.save();
         ctx.translate(p.home.x, p.home.y);
@@ -115,11 +131,13 @@ export function PuzzleBoard({ setup, picture, assist, active, restorePlaced, pee
       const w = (puzzle.pieceW + puzzle.pad * 2) * s;
       const h = (puzzle.pieceH + puzzle.pad * 2) * s;
       if (shadow !== 'none') {
-        ctx.shadowColor = shadow === 'lift' ? 'rgba(31,42,68,0.35)' : 'rgba(31,42,68,0.22)';
-        ctx.shadowBlur = (shadow === 'lift' ? 18 : 5) * s;
-        ctx.shadowOffsetY = (shadow === 'lift' ? 8 : 2) * s;
+        ctx.shadowColor = shadow === 'lift' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.32)';
+        ctx.shadowBlur = (shadow === 'lift' ? 24 : 6) * s;
+        ctx.shadowOffsetY = (shadow === 'lift' ? 14 : 3) * s;
       }
-      ctx.drawImage(bmp, x, y, w, h);
+      // A picked-up piece grows a touch, as if lifted towards you.
+      const grow = shadow === 'lift' ? 1.05 : 1;
+      ctx.drawImage(bmp, x - (w * (grow - 1)) / 2, y - (h * (grow - 1)) / 2, w * grow, h * grow);
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
@@ -128,6 +146,24 @@ export function PuzzleBoard({ setup, picture, assist, active, restorePlaced, pee
     for (const i of st.order) if (st.locked.has(i)) drawPiece(i, 'none');
     for (const i of st.order) if (!st.locked.has(i) && st.drag?.index !== i) drawPiece(i, 'rest');
     if (st.drag) drawPiece(st.drag.index, 'lift');
+
+    // Placement flash: a mustard glow that fades around a piece that just clicked in.
+    const now = performance.now();
+    st.flashes = st.flashes.filter((f) => now - f.at < FLASH_MS);
+    for (const f of st.flashes) {
+      const k = 1 - (now - f.at) / FLASH_MS;
+      const home = puzzle.pieces[f.index].home;
+      ctx.save();
+      ctx.setTransform(s, 0, 0, s, bx + home.x * s, by + home.y * s);
+      ctx.globalAlpha = k;
+      ctx.shadowColor = '#F3A712';
+      ctx.shadowBlur = 18 * k * s;
+      ctx.strokeStyle = '#FDE3A0';
+      ctx.lineWidth = 2 + 5 * k;
+      ctx.stroke(st.paths[f.index]);
+      ctx.restore();
+    }
+    if (st.flashes.length) schedule();
 
     if (st.img && live.current.peek) {
       ctx.globalAlpha = 0.92;
@@ -153,6 +189,15 @@ export function PuzzleBoard({ setup, picture, assist, active, restorePlaced, pee
       ctx.scale(s, s);
       ctx.translate(puzzle.pad, puzzle.pad);
       const path = st.paths[p.index];
+      // Cardboard edge first, peeking out below and to the right of the printed face.
+      ctx.save();
+      ctx.translate(EDGE.x, EDGE.y);
+      ctx.fillStyle = EDGE.color;
+      ctx.fill(path);
+      ctx.strokeStyle = EDGE.shade;
+      ctx.lineWidth = 1;
+      ctx.stroke(path);
+      ctx.restore();
       ctx.save();
       ctx.clip(path);
       ctx.drawImage(st.img as HTMLImageElement, -p.home.x, -p.home.y, BOARD_W, BOARD_H);
@@ -198,6 +243,7 @@ export function PuzzleBoard({ setup, picture, assist, active, restorePlaced, pee
       bitmapScale: 0,
       img: null,
       drag: null,
+      flashes: [],
     };
     fit();
     schedule();
@@ -355,6 +401,7 @@ export function PuzzleBoard({ setup, picture, assist, active, restorePlaced, pee
         st.pos[i] = { x: st.layout.board.x + home.x, y: st.layout.board.y + home.y };
         st.locked.add(i);
         st.pending.add(i);
+        st.flashes.push({ index: i, at: performance.now() });
         getSocket()?.emit('piece:place', { round: live.current.round, index: i, x: bx, y: by });
         sound.snap();
         buzz(12);

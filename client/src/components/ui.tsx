@@ -118,7 +118,7 @@ export function InviteCard({ code }: { code: string }) {
   }, []);
 
   useEffect(() => {
-    QRCode.toDataURL(url, { margin: 1, width: 320, color: { dark: '#1F2A44', light: '#FFFDF8' } })
+    QRCode.toDataURL(url, { margin: 1, width: 320, color: { dark: '#1F2A44', light: '#FFFAF0' } })
       .then(setQr)
       .catch(() => setQr(''));
   }, [url]);
@@ -132,16 +132,46 @@ export function InviteCard({ code }: { code: string }) {
     }
   };
 
+  const share = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Puzzle Clash', text: `Race me at jigsaw! Room ${code}`, url });
+        return;
+      } catch {
+        // Share sheet dismissed: fall back to copying.
+      }
+    }
+    await copy();
+  };
+
+  // An admission ticket: the stub (code) tears off from the QR along the perforation.
   return (
-    <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-      {qr && <img src={qr} alt={`QR code linking to ${url}`} className="h-36 w-36 rounded-xl border border-line" />}
-      <div className="space-y-2">
-        <div className="label">Room code</div>
-        <div className="heading text-4xl tracking-[0.25em]">{code}</div>
-        <p className="max-w-[240px] text-sm text-muted">Scan with the other phone, or open the game and enter the code.</p>
-        <button type="button" className="btn-secondary !min-h-[38px] text-sm" onClick={() => void copy()}>
-          <Icon name="copy" size={16} /> Copy link
-        </button>
+    <div className="relative flex flex-col overflow-hidden rounded-xl2 border-[1.5px] border-ink bg-paper shadow-hard sm:flex-row">
+      <div className="flex flex-1 flex-col justify-center gap-2 p-5">
+        <div className="label">Admit one opponent · room</div>
+        <div className="heading text-[44px] leading-none tracking-[0.22em] text-tomato">{code}</div>
+        <p className="max-w-[260px] text-sm text-muted">Scan the code with the other phone, or type the room code on its home screen.</p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <button type="button" className="btn-primary !min-h-[42px] text-sm" onClick={() => void share()}>
+            <Icon name="copy" size={16} /> Send invite
+          </button>
+          <button type="button" className="btn-secondary !min-h-[42px] text-sm" onClick={() => void copy()}>
+            Copy link
+          </button>
+        </div>
+      </div>
+      {/* Tear line: horizontal on phones, vertical on wider screens. Notches are punched out of the ticket edge. */}
+      <div className="relative h-4 sm:h-auto sm:w-4" aria-hidden>
+        <div className="absolute inset-x-4 top-1/2 border-t-2 border-dashed border-ink/25 sm:inset-x-auto sm:inset-y-4 sm:left-1/2 sm:top-auto sm:border-l-2 sm:border-t-0" />
+        <span className="absolute -left-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full border-[1.5px] border-ink bg-kraft sm:left-1/2 sm:top-[-12px] sm:-translate-x-1/2 sm:translate-y-0" />
+        <span className="absolute -right-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full border-[1.5px] border-ink bg-kraft sm:bottom-[-12px] sm:left-1/2 sm:right-auto sm:top-auto sm:-translate-x-1/2 sm:translate-y-0" />
+      </div>
+      <div className="grid place-items-center bg-table/70 p-5">
+        {qr ? (
+          <img src={qr} alt={`QR code linking to ${url}`} className="h-40 w-40 rounded-lg border-[1.5px] border-ink/20 bg-paper p-1" />
+        ) : (
+          <div className="h-40 w-40 animate-pulse rounded-lg bg-kraft" />
+        )}
       </div>
     </div>
   );

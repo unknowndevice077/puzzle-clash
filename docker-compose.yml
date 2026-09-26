@@ -1,6 +1,10 @@
+# Puzzle Clash runs as its own image and container, separate from Bluff Sketch
+# (Bluff Sketch: http://localhost:8080, Puzzle Clash: http://localhost:5070).
+name: puzzle-clash
 services:
   puzzle:
     build: .
+    image: puzzle-clash:latest
     ports:
       - "5070:5070"
     environment:

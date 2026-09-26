@@ -68,9 +68,26 @@ export class PhotoLibrary {
     return pack ? this.photos.filter((p) => p.pack === pack).length : this.photos.length;
   }
 
+  /**
+   * The public "box lid" picture for a pack, shown on the home screen. Covers are the first photo
+   * of each pack and never appear as a round's puzzle, so a public URL can't leak a round.
+   */
+  cover(pack: 'ghibli' | 'photos'): Photo | undefined {
+    return this.photos.find((p) => p.pack === pack);
+  }
+
+  private isCover(photo: Photo): boolean {
+    return photo.pack !== 'custom' && this.cover(photo.pack)?.id === photo.id;
+  }
+
   /** Random picture from the pack, not used yet this match (repeats only once the pack runs out). */
   pick(pack: PicturePack, exclude: Set<string>, roomCode: string | null): Photo {
-    const all = pack === 'custom' ? (roomCode ? (this.uploads.get(roomCode) ?? []) : []) : this.photos.filter((p) => p.pack === pack);
+    const all =
+      pack === 'custom'
+        ? roomCode
+          ? (this.uploads.get(roomCode) ?? [])
+          : []
+        : this.photos.filter((p) => p.pack === pack && !this.isCover(p));
     const source = all.length ? all : this.photos;
     if (!source.length) throw new Error('Picture library is empty. Run `npm run photos:fetch`.');
     const pool = source.filter((p) => !exclude.has(p.id));

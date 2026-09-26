@@ -83,6 +83,39 @@ export function createApp(store: Store, photos: PhotoLibrary, lobby: Lobby): exp
     res.type('image/jpeg').sendFile(file);
   });
 
+  /** Small public cover per pack for the home screen (covers are excluded from rounds). */
+  const covers = new Map<string, Buffer>();
+  app.get('/api/cover/:pack', (req, res, next) => {
+    const pack = String(req.params.pack);
+    if (pack !== 'ghibli' && pack !== 'photos') {
+      res.status(404).json({ error: 'Unknown pack' });
+      return;
+    }
+    const photo = photos.cover(pack);
+    if (!photo) {
+      res.status(404).json({ error: 'No pictures in this pack' });
+      return;
+    }
+    const send = (buf: Buffer) => {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.type('image/webp').send(buf);
+    };
+    const cached = covers.get(pack);
+    if (cached) {
+      send(cached);
+      return;
+    }
+    sharp(photo.file)
+      .resize(800, 600, { fit: 'cover', position: 'attention' })
+      .webp({ quality: 78 })
+      .toBuffer()
+      .then((buf) => {
+        covers.set(pack, buf);
+        send(buf);
+      })
+      .catch(next);
+  });
+
   app.get('/api/best/:difficulty', (req, res) => {
     const d = String(req.params.difficulty);
     if (!(DIFFICULTIES as readonly string[]).includes(d)) {

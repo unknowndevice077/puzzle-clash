@@ -9,37 +9,46 @@ body,
 }
 
 body {
-  @apply bg-table font-body text-ink antialiased;
-  /* Faint dot grid, like a cutting mat. */
-  background-image: radial-gradient(rgba(31, 42, 68, 0.07) 1px, transparent 1.2px);
-  background-size: 22px 22px;
+  @apply bg-kraft font-body text-ink antialiased;
+  /* Kraft cardboard: faint fibres plus a slow light falloff, like the inside of a puzzle box. */
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 250, 240, 0.55), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8 0.05' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.33 0 0 0 0 0.16 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-attachment: fixed;
   overscroll-behavior: none;
 }
 
 @layer components {
+  /* A printed panel on the box: cream stock, ink rule, a hard offset shadow. */
   .card {
-    @apply rounded-xl2 border border-line bg-card shadow-card;
+    @apply rounded-xl2 border-[1.5px] border-ink bg-paper shadow-hard;
+  }
+  .card-soft {
+    @apply rounded-xl2 border border-kraft-deep/40 bg-paper/80 shadow-card;
   }
   .btn {
-    @apply inline-flex min-h-[44px] select-none items-center justify-center gap-2 rounded-xl border-[1.5px] border-ink px-4 font-display text-[15px] font-semibold tracking-tight transition active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-45;
+    @apply inline-flex min-h-[46px] select-none items-center justify-center gap-2 rounded-xl border-[1.5px] border-ink px-4 font-display text-[15px] font-semibold tracking-tight transition active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-45;
   }
   .btn-primary {
     @apply btn bg-tomato text-white shadow-pop hover:bg-tomato-dark;
   }
   .btn-secondary {
-    @apply btn bg-card text-ink shadow-lift hover:bg-table;
+    @apply btn bg-paper text-ink shadow-lift hover:bg-table;
   }
   .btn-ghost {
     @apply btn border-transparent bg-transparent text-ink shadow-none hover:bg-ink/5;
   }
+  .btn-felt {
+    @apply btn border-paper/25 bg-felt-deep/70 text-paper shadow-none hover:bg-felt-deep;
+  }
   .label {
-    @apply text-xs font-semibold uppercase tracking-[0.12em] text-muted;
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-muted;
   }
   .input {
-    @apply min-h-[44px] w-full rounded-xl border-[1.5px] border-line bg-white px-3 font-semibold text-ink placeholder:text-muted/70 focus:border-ink focus:outline-none;
+    @apply min-h-[46px] w-full rounded-xl border-[1.5px] border-ink/25 bg-white px-3 font-semibold text-ink placeholder:text-muted/70 focus:border-ink focus:outline-none;
   }
   .segmented {
-    @apply inline-flex max-w-full flex-wrap gap-0.5 rounded-xl border-[1.5px] border-line bg-table p-1;
+    @apply inline-flex max-w-full flex-wrap gap-0.5 rounded-xl border-[1.5px] border-ink/15 bg-table p-1;
   }
   .segmented > button {
     @apply min-h-[38px] rounded-lg px-3 text-sm font-semibold text-muted transition;
@@ -50,6 +59,28 @@ body {
   .heading {
     @apply font-display font-extrabold tracking-tight;
   }
+  /* Perforated tear line for the invite ticket. */
+  .perforation {
+    background-image: radial-gradient(circle, #e6d5b5 4px, transparent 4.5px);
+    background-size: 16px 16px;
+    background-position: center;
+    background-repeat: repeat-y;
+  }
+}
+
+/* The solving table: green felt with a cutting-mat grid. */
+.felt {
+  background-color: #245a4c;
+  background-image:
+    radial-gradient(90% 70% at 50% 40%, rgba(255, 255, 255, 0.07), transparent 70%),
+    linear-gradient(rgba(255, 250, 240, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 250, 240, 0.06) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:
+    100% 100%,
+    32px 32px,
+    32px 32px,
+    160px 160px;
 }
 
 *:focus-visible {
@@ -62,6 +93,7 @@ body {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }

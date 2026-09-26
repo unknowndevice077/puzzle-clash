@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 import { DIFFICULTY_SPECS } from '@pc/shared';
+import { PieceIcon } from './components/jigsaw';
 import { ConnectionBanner, Icon, Toasts } from './components/ui';
 import { actions } from './net/actions';
 import { api } from './net/api';
@@ -21,10 +22,13 @@ function Searching() {
   if (!queue.searching) return null;
   const secs = Math.max(0, Math.floor((now - queue.since) / 1000));
   return (
-    <div className="fixed inset-0 z-40 grid place-items-center bg-ink/40 p-4">
+    <div className="fixed inset-0 z-40 grid place-items-center bg-felt-deep/70 p-4 backdrop-blur-[2px]">
       <div className="card w-full max-w-sm p-6 text-center">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-line border-t-tomato" aria-hidden />
-        <h2 className="heading mt-4 text-2xl">Finding an opponent</h2>
+        <div className="relative mx-auto h-16 w-28" aria-hidden>
+          <PieceIcon size={48} fill="#E4572E" className="absolute left-0 top-2 animate-bob" />
+          <PieceIcon size={48} fill="#2A9D8F" className="absolute right-0 top-2 animate-bob [animation-delay:-1.6s]" />
+        </div>
+        <h2 className="heading mt-3 text-2xl">Looking for a rival</h2>
         <p className="mt-1 text-sm text-muted">
           {queue.difficulty ? DIFFICULTY_SPECS[queue.difficulty].label : ''} · waiting {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, '0')}
         </p>
@@ -56,7 +60,7 @@ export function App() {
 
   useEffect(boot, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (status === 'loading') return <div className="grid h-full place-items-center font-display text-xl text-muted">Tipping out the pieces…</div>;
+  if (status === 'loading') return <div className="grid h-full place-items-center"><div className="flex flex-col items-center gap-3 font-display text-lg font-bold text-muted"><PieceIcon size={44} fill="#F3A712" className="animate-bob" />Tipping out the pieces…</div></div>;
   if (status === 'error') {
     return (
       <div className="grid h-full place-items-center p-6">
