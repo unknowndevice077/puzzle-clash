@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-table font-body text-ink antialiased;
+  /* Faint dot grid, like a cutting mat. */
+  background-image: radial-gradient(rgba(31, 42, 68, 0.07) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  overscroll-behavior: none;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl2 border border-line bg-card shadow-card;
+  }
+  .btn {
+    @apply inline-flex min-h-[44px] select-none items-center justify-center gap-2 rounded-xl border-[1.5px] border-ink px-4 font-display text-[15px] font-semibold tracking-tight transition active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  .btn-primary {
+    @apply btn bg-tomato text-white shadow-pop hover:bg-tomato-dark;
+  }
+  .btn-secondary {
+    @apply btn bg-card text-ink shadow-lift hover:bg-table;
+  }
+  .btn-ghost {
+    @apply btn border-transparent bg-transparent text-ink shadow-none hover:bg-ink/5;
+  }
+  .label {
+    @apply text-xs font-semibold uppercase tracking-[0.12em] text-muted;
+  }
+  .input {
+    @apply min-h-[44px] w-full rounded-xl border-[1.5px] border-line bg-white px-3 font-semibold text-ink placeholder:text-muted/70 focus:border-ink focus:outline-none;
+  }
+  .segmented {
+    @apply inline-flex max-w-full flex-wrap gap-0.5 rounded-xl border-[1.5px] border-line bg-table p-1;
+  }
+  .segmented > button {
+    @apply min-h-[38px] rounded-lg px-3 text-sm font-semibold text-muted transition;
+  }
+  .segmented > button[aria-pressed='true'] {
+    @apply bg-ink text-white;
+  }
+  .heading {
+    @apply font-display font-extrabold tracking-tight;
+  }
+}
+
+*:focus-visible {
+  outline: 3px solid #f3a712;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/*
+ * Game-like touch behaviour: a long press never selects text, opens the iOS callout
+ * or the "save image" menu, and taps don't flash grey. Text fields stay selectable.
+ */
+html {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input,
+textarea,
+select,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+img,
+canvas,
+svg {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+button,
+a,
+[role='button'] {
+  /* Removes the double-tap-to-zoom delay on buttons. */
+  touch-action: manipulation;
+}
